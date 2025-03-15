@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+package smartparking;
+
+// Define the Smart Parking service
+service SmartParking {
+    // Simple RPC for checking number plate
+    rpc CheckPlate (PlateRequest) returns (PlateResponse);
+}
+
+// Request message containing the plate number
+message PlateRequest {
+    string  plateNumber = 1;
+}
+
+// Response message indicating whether the plate is allowed or denied
+message PlateResponse {
+    string status = 1; // e.g., "Allowed" or "Denied"
+}
