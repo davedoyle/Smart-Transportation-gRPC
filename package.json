@@ -1,0 +1,27 @@
+{
+  "name": "smart-transportation-grpc",
+  "version": "1.0.0",
+  "description": "This project is for academic purposes as part of a Distributed Systems assignment (2025).",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/davedoyle/Smart-Transportation-gRPC.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/davedoyle/Smart-Transportation-gRPC/issues"
+  },
+  "homepage": "https://github.com/davedoyle/Smart-Transportation-gRPC#readme",
+  "dependencies": {
+    "@grpc/grpc-js": "^1.13.0",
+    "@grpc/proto-loader": "^0.7.13"
+  }
+}
