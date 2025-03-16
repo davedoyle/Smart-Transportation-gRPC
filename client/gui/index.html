@@ -13,9 +13,24 @@
     <script>
         function checkPlate() {
             const plateNumber = document.getElementById('plateInput').value;
-            // Placeholder - to be wired to the backend later
-            document.getElementById('result').innerText = `Plate entered: ${plateNumber}`;
+    
+            fetch('/checkPlate', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ plateNumber: plateNumber })
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('result').innerText = `Plate status: ${data.status}`;
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                document.getElementById('result').innerText = 'Error checking plate';
+            });
         }
     </script>
+    
 </body>
 </html>
