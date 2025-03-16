@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Smart Parking Plate Checker</title>
+</head>
+<body>
+    <h1>Number Plate Checker</h1>
+    <input type="text" id="plateInput" placeholder="Enter Plate Number" />
+    <button onclick="checkPlate()">Check Plate</button>
+    <p id="result"></p>
+
+    <script>
+        function checkPlate() {
+            const plateNumber = document.getElementById('plateInput').value;
+    
+            fetch('/checkPlate', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ plateNumber: plateNumber })
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('result').innerText = `Plate status: ${data.status}`;
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                document.getElementById('result').innerText = 'Error checking plate';
+            });
+        }
+    </script>
+    
+</body>
+</html>
