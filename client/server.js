@@ -5,27 +5,38 @@ const port = 8080;
 const grpc = require('@grpc/grpc-js');
 const protoLoader = require('@grpc/proto-loader');
 
-// Load proto and client
-const PROTO_PATH = path.join(__dirname, '../proto/smart_parking.proto');
-const packageDefinition = protoLoader.loadSync(PROTO_PATH, {});
-const smartParkingProto = grpc.loadPackageDefinition(packageDefinition).smartparking;
+// Load both proto files
+const PARKING_PROTO_PATH = path.join(__dirname, '../proto/smart_parking.proto');
+const SPACES_PROTO_PATH = path.join(__dirname, '../proto/smart_parking_spaces.proto');
 
-const client = new smartParkingProto.SmartParking(
+const parkingDefinition = protoLoader.loadSync(PARKING_PROTO_PATH, {});
+const spacesDefinition = protoLoader.loadSync(SPACES_PROTO_PATH, {});
+
+const smartParkingProto = grpc.loadPackageDefinition(parkingDefinition).smartparking;
+const smartParkingSpacesProto = grpc.loadPackageDefinition(spacesDefinition).SmartParkingSpaces;
+
+//Create two gRPC clients (one for each service)
+const parkingClient = new smartParkingProto.SmartParking(
     'localhost:50051',
+    grpc.credentials.createInsecure()
+);
+
+const spacesClient = new smartParkingSpacesProto.ParkingSpaces(
+    'localhost:50052',
     grpc.credentials.createInsecure()
 );
 
 // First, parse JSON bodies
 app.use(express.json());
 
-// Serve static files (index.html)
+//Serve static files (index.html)
 app.use(express.static(path.join(__dirname, 'gui')));
 
-// define the route AFTER middleware is ready
+//Define the route AFTER middleware is ready
 app.post('/checkPlate', (req, res) => {
-    const plateNumber = req.body.plateNumber;  // Now this will work!
+    const plateNumber = req.body.plateNumber; // Now this will work!
 
-    client.CheckPlate({ plateNumber: plateNumber }, (err, response) => {
+    parkingClient.CheckPlate({ plateNumber: plateNumber }, (err, response) => {
         if (err) {
             console.error('gRPC Error:', err.message);
             res.status(500).json({ status: 'Error', details: err.message });
@@ -35,6 +46,28 @@ app.post('/checkPlate', (req, res) => {
     });
 });
 
+// Fix: Use `spacesClient` for StreamSpaces instead of `client`
+app.get('/parkingSpaces', (req, res) => {
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+
+    const call = spacesClient.StreamSpaces({}); //Corrected client call
+
+    call.on('data', (response) => {
+        res.write(`data: ${JSON.stringify(response)}\n\n`);
+    });
+
+    call.on('end', () => {
+        res.end();
+    });
+
+    req.on('close', () => {
+        call.cancel();
+    });
+});
+
+// Everything else stays the same
 app.listen(port, () => {
-  console.log(`🌐 GUI Server running at http://localhost:${port}`);
+    console.log(`🌐 GUI Server running at http://localhost:${port}`);
 });
