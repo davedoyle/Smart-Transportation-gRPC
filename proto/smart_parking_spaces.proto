@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+package SmartParkingSpaces; // CamelCase
+
+service ParkingSpaces {
+    rpc StreamSpaces (Empty) returns (stream SpacesUpdate); // This must be exact!
+}
+
+message Empty {} // Required for an empty request
+
+message SpacesUpdate {
+    int32 availableSpaces = 1; // Ensure correct field name
+}

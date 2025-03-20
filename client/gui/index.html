@@ -10,6 +10,8 @@
     <button onclick="checkPlate()">Check Plate</button>
     <p id="result"></p>
 
+    <h2>Available Parking Spaces: <span id="parkingSpaces">Loading...</span></h2>
+
     <script>
         function checkPlate() {
             const plateNumber = document.getElementById('plateInput').value;
@@ -30,6 +32,13 @@
                 document.getElementById('result').innerText = 'Error checking plate';
             });
         }
+
+        const eventSource = new EventSource('/parkingSpaces');
+        eventSource.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+            document.getElementById("parkingSpaces").textContent = data.availableSpaces;
+        };
+
     </script>
     
 </body>
