@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+package smarttraffic;
+
+service TrafficMonitoring {
+  // Client streaming RPC
+  rpc StreamTraffic (stream TrafficReport) returns (SummaryResponse);
+}
+
+// Message sent by each user
+message TrafficReport {
+  string location = 1;
+  int32 congestionLevel = 2; // 1 = heavy, 5 = very light
+}
+
+// Response from the server after stream ends
+message SummaryResponse {
+  float averageCongestion = 1;
+  int32 totalReports = 2;
+  string mostReportedLocation = 3;
+}
