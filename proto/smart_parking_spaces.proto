@@ -1,9 +1,10 @@
+//serverstreaming
 syntax = "proto3";
 
 package SmartParkingSpaces; // CamelCase
 
 service ParkingSpaces {
-    rpc StreamSpaces (Empty) returns (stream SpacesUpdate); // This must be exact!
+    rpc StreamSpaces (Empty) returns (stream SpacesUpdate); // Dave this must be exact!
 }
 
 message Empty {} // Required for an empty request

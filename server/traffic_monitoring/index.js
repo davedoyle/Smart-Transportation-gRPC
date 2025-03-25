@@ -51,8 +51,8 @@ server.addService(trafficProto.TrafficMonitoring.service, {
     StreamTraffic: StreamTraffic
 });
 
-const PORT = '0.0.0.0:50053';
+const PORT = 'localhost:50053';
 server.bindAsync(PORT, grpc.ServerCredentials.createInsecure(), () => {
-    console.log(`🚦 Traffic Monitoring Service running on ${PORT}`);
+    console.log(`Traffic Monitoring Service running on ${PORT}`);
     server.start();
 });

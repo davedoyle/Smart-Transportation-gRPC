@@ -4,8 +4,8 @@ const path = require('path');
 
 // Load the proto file
 const PROTO_PATH = path.join(__dirname, '../../proto/smart_parking.proto');
-const packageDefinition = protoLoader.loadSync(PROTO_PATH, {}); // No keepCase needed (note to me, keep camelcase in proto and all is good with the world!!)
-const smartParkingProto = grpc.loadPackageDefinition(packageDefinition).smartparking;
+const packageDefinition = protoLoader.loadSync(PROTO_PATH, {}); 
+const smartParkingProto = grpc.loadPackageDefinition(packageDefinition).smartparking; // No keepCase needed (note to me, keep camelcase in proto and all is good with the world!!)
 
 // List of allowed number plates (hardcoded for now)
 const allowedPlates = ['12C3456', '191D7890', '211L4321'].map(p => p.trim().toUpperCase());// had to force uppercase as i wasnt getting inteded output!
@@ -25,13 +25,13 @@ function CheckPlate(call, callback) {
 const server = new grpc.Server();
 server.addService(smartParkingProto.SmartParking.service, { CheckPlate });
 
-const PORT = '0.0.0.0:50051';
+const PORT = 'localhost:50051';//changed to local host!!!!! <------Divyaa call, watch for the localhost local ip conflict issue
 
 server.bindAsync(PORT, grpc.ServerCredentials.createInsecure(), (err, port) => {
     if (err) {
         console.error(`Server error: ${err.message}`);
         return;
     }
-    console.log(`🚗 Smart Parking gRPC server running on ${PORT}`);
+    console.log(`Smart Parking gRPC server running on ${PORT}`);
     server.start();
 });
