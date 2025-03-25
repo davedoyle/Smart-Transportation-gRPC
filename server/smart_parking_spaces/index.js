@@ -5,7 +5,7 @@ const path = require('path');
 // Load the proto file
 const PROTO_PATH = path.join(__dirname, '../../proto/smart_parking_spaces.proto');
 const packageDefinition = protoLoader.loadSync(PROTO_PATH, {});
-const parkingProto = grpc.loadPackageDefinition(packageDefinition).SmartParkingSpaces; 
+const parkingProto = grpc.loadPackageDefinition(packageDefinition).SmartParkingSpaces; //has to be exact as proto
 
 // Constants for simulation
 const MAX_SPACES = 50;
@@ -48,12 +48,12 @@ function StreamSpaces(call) {
 const server = new grpc.Server();
 server.addService(parkingProto.ParkingSpaces.service, { StreamSpaces });
 
-const PORT = '0.0.0.0:50052';
+const PORT = 'localhost:50052';
 server.bindAsync(PORT, grpc.ServerCredentials.createInsecure(), (err, port) => {
     if (err) {
         console.error(`Server error: ${err.message}`);
         return;
     }
-    console.log(`🚗 Smart Parking Spaces gRPC server running on ${PORT}`);
+    console.log(`Smart Parking Spaces gRPC server running on ${PORT}`);
     server.start();
 });

@@ -26,15 +26,15 @@ const spacesClient = new smartParkingSpacesProto.ParkingSpaces(
     grpc.credentials.createInsecure()
 );
 
-// First, parse JSON bodies
+
 app.use(express.json());
 
-//Serve static files (index.html)
+
 app.use(express.static(path.join(__dirname, 'gui')));
 
-//Define the route AFTER middleware is ready
+
 app.post('/checkPlate', (req, res) => {
-    const plateNumber = req.body.plateNumber; // Now this will work!
+    const plateNumber = req.body.plateNumber; 
 
     parkingClient.CheckPlate({ plateNumber: plateNumber }, (err, response) => {
         if (err) {
@@ -46,13 +46,13 @@ app.post('/checkPlate', (req, res) => {
     });
 });
 
-// Fix: Use `spacesClient` for StreamSpaces instead of `client`
+
 app.get('/parkingSpaces', (req, res) => {
     res.setHeader('Content-Type', 'text/event-stream');
     res.setHeader('Cache-Control', 'no-cache');
     res.setHeader('Connection', 'keep-alive');
 
-    const call = spacesClient.StreamSpaces({}); //Corrected client call
+    const call = spacesClient.streamSpaces({}); // Note the protoname camelcase! 
 
     call.on('data', (response) => {
         res.write(`data: ${JSON.stringify(response)}\n\n`);
@@ -62,12 +62,17 @@ app.get('/parkingSpaces', (req, res) => {
         res.end();
     });
 
+    call.on('error', (err) => {
+        console.log('Stream error caught:', err.message); 
+        res.end(); // Gracefully close connection if needed
+    });
+
     req.on('close', () => {
-        call.cancel();
+        call.cancel(); // Client closed browser/tab
     });
 });
 
-// Everything else stays the same
+
 app.listen(port, () => {
-    console.log(`🌐 GUI Server running at http://localhost:${port}`);
+    console.log(`GUI Server running at http://localhost:${port}`);
 });
