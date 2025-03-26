@@ -64,7 +64,7 @@ app.get('/parkingSpaces', (req, res) => {
 
     call.on('error', (err) => {
         console.log('Stream error caught:', err.message); 
-        res.end(); // Gracefully close connection if needed
+        res.end(); // Gracefully close connection
     });
 
     req.on('close', () => {
