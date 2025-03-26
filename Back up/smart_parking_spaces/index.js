@@ -57,3 +57,4 @@ server.bindAsync(PORT, grpc.ServerCredentials.createInsecure(), (err, port) => {
     console.log(`Smart Parking Spaces gRPC server running on ${PORT}`);
     server.start();
 });
+

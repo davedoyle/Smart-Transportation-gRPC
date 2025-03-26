@@ -21,9 +21,51 @@ function CheckPlate(call, callback) {
 
     callback(null, { status });
 }
-// Create and start the gRPC server
+
+// Post merge of service
+// Constants for simulation
+const MAX_SPACES = 50;
+let availableSpaces = MAX_SPACES;
+
+// Function to simulate space updates realistically
+function simulateSpaceChanges() {
+    const hour = new Date().getHours();
+    let change = Math.floor(Math.random() * 3) - 1; // Small realistic adjustments (-1, 0, +1)
+
+    if (hour >= 6 && hour < 10) {
+        // Morning: More cars arriving
+        change = Math.floor(Math.random() * 5) - 4; // -4 to +1
+    } else if (hour >= 16 && hour < 20) {
+        // Evening: More cars leaving
+        change = Math.floor(Math.random() * 5) - 1; // -1 to +3
+    }
+
+    availableSpaces = Math.max(0, Math.min(MAX_SPACES, availableSpaces + change));
+}
+
+// Implementation of StreamSpaces
+function StreamSpaces(call) {
+    console.log("Client connected for parking space updates...");
+
+    const interval = setInterval(() => {
+        simulateSpaceChanges();
+        call.write({ availableSpaces });
+        console.log(`Updated spaces: ${availableSpaces}`);
+    }, 3000); // Send updates every 3 seconds
+
+    call.on('end', () => {
+        console.log("Client disconnected from parking space updates.");
+        clearInterval(interval);
+        call.end();
+    });
+}
+
+// Create and start the gRPC server including the services
 const server = new grpc.Server();
-server.addService(smartParkingProto.SmartParking.service, { CheckPlate });
+server.addService(smartParkingProto.SmartParking.service, { 
+        CheckPlate,
+        StreamSpaces
+ });
 
 const PORT = 'localhost:50051';//changed to local host!!!!! <------Divyaa call, watch for the localhost local ip conflict issue
 

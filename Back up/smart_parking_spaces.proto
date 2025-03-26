@@ -12,3 +12,4 @@ message Empty {} // Required for an empty request
 message SpacesUpdate {
     int32 availableSpaces = 1; // Ensure correct field name
 }
+
