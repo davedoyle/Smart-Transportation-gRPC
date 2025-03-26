@@ -1,4 +1,4 @@
-//unary
+//unary and serverstreaming
 syntax = "proto3";
 
 package smartparking;
@@ -7,6 +7,9 @@ package smartparking;
 service SmartParking {
     // Simple RPC for checking number plate
     rpc CheckPlate (PlateRequest) returns (PlateResponse);
+    //serverstreaming
+    rpc StreamSpaces (Empty) returns (stream SpacesUpdate); // Dave this must be exact!
+
 }
 
 // Request message containing the plate number
@@ -18,3 +21,9 @@ message PlateRequest {
 message PlateResponse {
     string status = 1; // e.g., "Allowed" or "Denied"
 }
+
+message SpacesUpdate {
+    int32 availableSpaces = 1; // Ensure correct field name
+}
+
+message Empty {} // Required for an empty request
