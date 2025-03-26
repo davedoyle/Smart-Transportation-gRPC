@@ -1,3 +1,4 @@
+//client streaming
 syntax = "proto3";
 
 package smarttraffic;
@@ -5,7 +6,8 @@ package smarttraffic;
 service TrafficMonitoring {
   // Client streaming RPC
   rpc StreamTraffic (stream TrafficReport) returns (SummaryResponse);
-}
+
+  }
 
 // Message sent by each user
 message TrafficReport {
