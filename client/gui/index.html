@@ -15,17 +15,18 @@
     <script>
         function checkPlate() {
             const plateNumber = document.getElementById('plateInput').value;
-    
+
             fetch('/checkPlate', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ plateNumber: plateNumber })
+                body: JSON.stringify({ registrationPlate: plateNumber }) // now camelCase
             })
             .then(response => response.json())
             .then(data => {
-                document.getElementById('result').innerText = `Plate status: ${data.status}`;
+                const statusText = data.approved ? "Allowed" : "Denied";
+                document.getElementById('result').innerText = `Plate status: ${statusText} (${data.message})`;
             })
             .catch(error => {
                 console.error('Error:', error);
@@ -36,10 +37,8 @@
         const eventSource = new EventSource('/parkingSpaces');
         eventSource.onmessage = (event) => {
             const data = JSON.parse(event.data);
-            document.getElementById("parkingSpaces").textContent = data.availableSpaces;
+            document.getElementById("parkingSpaces").textContent = data.availableSpaces; // now camelCase
         };
-
     </script>
-    
 </body>
 </html>
