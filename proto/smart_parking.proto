@@ -3,27 +3,23 @@ syntax = "proto3";
 
 package smartparking;
 
-// Define the Smart Parking service
 service SmartParking {
-    // Simple RPC for checking number plate
-    rpc CheckPlate (PlateRequest) returns (PlateResponse);
-    //serverstreaming
-    rpc StreamSpaces (Empty) returns (stream SpacesUpdate); // Dave this must be exact!
-
+  rpc CheckEntry (CarRequest) returns (CarResponse);
+  rpc GetParkingAvailability (Empty) returns (stream ParkingUpdate);
 }
 
-// Request message containing the plate number
-message PlateRequest {
-    string  plateNumber = 1;
+message CarRequest {
+  string registrationPlate = 1; // changed from registration_plate
 }
 
-// Response message indicating whether the plate is allowed or denied
-message PlateResponse {
-    string status = 1; // e.g., "Allowed" or "Denied"
+message CarResponse {
+  bool approved = 1;
+  string message = 2;
 }
 
-message SpacesUpdate {
-    int32 availableSpaces = 1; // Ensure correct field name
-}
+message Empty {}
 
-message Empty {} // Required for an empty request
+message ParkingUpdate {
+  int32 availableSpaces = 1; // changed from available_spaces
+  string timestamp = 2;
+}
