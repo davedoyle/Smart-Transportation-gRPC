@@ -9,13 +9,22 @@ const protoLoader = require('@grpc/proto-loader');
 
 // Load merged proto (camelCase version — no keepCase needed)
 const PARKING_PROTO_PATH = path.join(__dirname, '../proto/smart_parking.proto');
+const TRAFFIC_PROTO_PATH = path.join(__dirname, '../proto/smart_traffic.proto');
 
-const parkingDefinition = protoLoader.loadSync(PARKING_PROTO_PATH, {}); // no keepCase
+const parkingDefinition = protoLoader.loadSync(PARKING_PROTO_PATH, {});
+const trafficDefinition = protoLoader.loadSync(TRAFFIC_PROTO_PATH, {});
+
 const smartParkingProto = grpc.loadPackageDefinition(parkingDefinition).smartparking;
+const smartTrafficProto = grpc.loadPackageDefinition(trafficDefinition).smarttraffic;
 
-// Create gRPC client
+// Create gRPC clients
 const parkingClient = new smartParkingProto.SmartParking(
     'localhost:50051',
+    grpc.credentials.createInsecure()
+);
+
+const trafficClient = new smartTrafficProto.TrafficMonitor(
+    'localhost:50053',
     grpc.credentials.createInsecure()
 );
 
@@ -55,7 +64,6 @@ app.get('/parkingSpaces', (req, res) => {
     const call = parkingClient.GetParkingAvailability({});
 
     call.on('data', (response) => {
-        // response.availableSpaces and response.timestamp now in camelCase
         res.write(`data: ${JSON.stringify(response)}\n\n`);
     });
 
@@ -69,6 +77,32 @@ app.get('/parkingSpaces', (req, res) => {
     req.on('close', () => {
         call.cancel(); // Stop stream if browser disconnects
     });
+});
+
+// New route to handle traffic congestion reporting
+app.post('/reportTraffic', (req, res) => {
+    const updates = req.body;
+
+    if (!Array.isArray(updates) || updates.length === 0) {
+        return res.status(400).json({ message: 'No traffic reports received' });
+    }
+
+    const call = trafficClient.StreamTraffic((err, summary) => {
+        if (err) {
+            console.error("gRPC error during StreamTraffic:", err.message);
+            return res.status(500).json({ message: "gRPC error: " + err.message });
+        }
+
+        console.log("Server summary response:", summary);
+        res.json(summary); // Send summary back to GUI
+    });
+
+    updates.forEach(update => {
+        console.log("Sending traffic update to gRPC:", update);
+        call.write(update);
+    });
+
+    call.end(); // All updates sent, end stream
 });
 
 app.listen(port, () => {

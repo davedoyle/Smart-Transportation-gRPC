@@ -13,8 +13,8 @@ function StreamTraffic(call, callback) {
     let count = 0;
     const locationCounts = {};
 
-    call.on('data', (report) => {
-        const { location, congestionLevel } = report;
+    call.on('data', (update) => {
+        const { location, congestionLevel } = update;
 
         console.log(`Received report from ${location}: level ${congestionLevel}`);
 
@@ -47,7 +47,7 @@ function StreamTraffic(call, callback) {
 
 // gRPC server setup
 const server = new grpc.Server();
-server.addService(trafficProto.TrafficMonitoring.service, {
+server.addService(trafficProto.TrafficMonitor.service, {
     StreamTraffic: StreamTraffic
 });
 
