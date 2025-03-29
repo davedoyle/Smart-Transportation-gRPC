@@ -12,7 +12,26 @@
 
     <h2>Available Parking Spaces: <span id="parkingSpaces">Loading...</span></h2>
 
+    <hr>
+    <h1>Traffic Congestion Reporter</h1>
+    <p>Send a few location + congestion levels and see what the server thinks</p>
+    <input type="text" id="locationInput" placeholder="Enter Location" />
+    <select id="congestionLevel">
+        <option value="1">1 - Heavy</option>
+        <option value="2">2</option>
+        <option value="3">3 - Medium</option>
+        <option value="4">4</option>
+        <option value="5">5 - Very Light</option>
+    </select>
+    <button onclick="addTraffic()">Add Report</button>
+    <button onclick="submitTraffic()">Submit All</button>
+
+    <ul id="trafficList"></ul>
+    <p id="trafficSummary"></p>
+
     <script>
+        const trafficReports = [];
+
         function checkPlate() {
             const plateNumber = document.getElementById('plateInput').value;
 
@@ -39,6 +58,52 @@
             const data = JSON.parse(event.data);
             document.getElementById("parkingSpaces").textContent = data.availableSpaces; // now camelCase
         };
+
+        // Add a traffic report to memory
+        function addTraffic() {
+            const location = document.getElementById('locationInput').value;
+            const congestion = parseInt(document.getElementById('congestionLevel').value);
+
+            if (!location) {
+                alert("Enter a location first silly!.");
+                return;
+            }
+
+            trafficReports.push({ location, congestionLevel: congestion });
+
+            const list = document.getElementById('trafficList');
+            const item = document.createElement('li');
+            item.textContent = `${location} - Level ${congestion}`;
+            list.appendChild(item);
+
+            document.getElementById('locationInput').value = '';
+        }
+
+        // Send all reports to backend for gRPC streaming
+        function submitTraffic() {
+            if (trafficReports.length === 0) {
+                alert("Add at least one traffic report first!");
+                return;
+            }
+
+            fetch('/reportTraffic', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(trafficReports)
+            })
+            .then(response => response.json())
+            .then(summary => {
+                document.getElementById('trafficSummary').innerText = `Average Congestion: ${summary.averageCongestion.toFixed(1)} | Reports: ${summary.totalReports} | Most Reported Location: ${summary.mostReportedLocation}`;
+                trafficReports.length = 0; // reset
+                document.getElementById('trafficList').innerHTML = '';
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                document.getElementById('trafficSummary').innerText = 'Error getting summary';
+            });
+        }
     </script>
 </body>
 </html>

@@ -3,21 +3,22 @@ syntax = "proto3";
 
 package smarttraffic;
 
-service TrafficMonitoring {
+service TrafficMonitor {
   // Client streaming RPC
-  rpc StreamTraffic (stream TrafficReport) returns (SummaryResponse);
+  rpc StreamTraffic (stream TrafficUpdate) returns (TrafficSummary);
 
   }
 
 // Message sent by each user
-message TrafficReport {
+message TrafficUpdate {
   string location = 1;
   int32 congestionLevel = 2; // 1 = heavy, 5 = very light
 }
 
 // Response from the server after stream ends
-message SummaryResponse {
+message TrafficSummary {
   float averageCongestion = 1;
   int32 totalReports = 2;
   string mostReportedLocation = 3;
 }
+

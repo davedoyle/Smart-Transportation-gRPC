@@ -28,6 +28,7 @@ function runService(label, scriptPath) {
 
 //start the Smart Parking service
 runService('SmartParking', 'smart_parking/index.js');
+runService('smarttraffic', 'traffic_monitoring/index.js');
 
 //more services here
 
