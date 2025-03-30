@@ -26,9 +26,15 @@ function runService(label, scriptPath) {
     });
 }
 
-//start the Smart Parking service
-runService('SmartParking', 'smart_parking/index.js');
-runService('smarttraffic', 'traffic_monitoring/index.js');
+// Start the Service Discovery service first
+runService('servicediscovery', 'service_discovery/index.js');
 
-//more services here
+// Then delay the others a bit to give it time to start
+setTimeout(() => {
+    runService('SmartParking', 'smart_parking/index.js');
+    runService('smarttraffic', 'traffic_monitoring/index.js');
+}, 3000); // wait 3 seconds 
+
+
+
 

@@ -28,6 +28,11 @@
 
     <ul id="trafficList"></ul>
     <p id="trafficSummary"></p>
+    
+    <hr>
+    <h2>Registered Services</h2>
+    <ul id="discoveryList"></ul>
+    
 
     <script>
         const trafficReports = [];
@@ -104,6 +109,31 @@
                 document.getElementById('trafficSummary').innerText = 'Error getting summary';
             });
         }
+
+        function loadDiscoveredServices() {
+            fetch('/discoveredServices')
+            .then(res => res.json())
+            .then(data => {
+                const list = document.getElementById('discoveryList');
+                list.innerHTML = ''; // clear previous
+
+                data.forEach(service => {
+                    const item = document.createElement('li');
+                    item.textContent = `${service.serviceName} (${service.serviceType}) @ ${service.address} – ${service.status}`;
+                    list.appendChild(item);
+            });
+            })
+            .catch(err => {
+                console.error('Failed to load discovered services:', err);
+        });
+}
+        // Call it once on page load
+        loadDiscoveredServices();
+
+        // Optional: refresh every 10 seconds
+        setInterval(loadDiscoveredServices, 10000);
+
+
     </script>
 </body>
 </html>

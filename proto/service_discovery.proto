@@ -1,0 +1,29 @@
+//bi-di
+syntax = "proto3";
+
+package servicediscovery;
+
+service ServiceDiscovery {
+  // Bi-directional streaming RPC
+  rpc RegisterService (stream ServiceInfo) returns (stream DiscoveryResponse);
+  //unary to show discovered services on gui
+  rpc ListServices (Empty) returns (ServiceList);
+}
+
+message ServiceInfo {
+  string serviceName = 1;     // "SmartParking"
+  string serviceType = 2;     // "parking", "traffic"
+  string address = 3;         // "localhost:50051"
+  string status = 4;          // "online", "idle", "offline"
+}
+
+message DiscoveryResponse {
+  string message = 1;         // "Registered successfully", "Ping from server"
+  string timestamp = 2;       // optional feedback time
+}
+
+message Empty {}
+
+message ServiceList {
+  repeated ServiceInfo services = 1;
+}
