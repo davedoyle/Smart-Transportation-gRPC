@@ -10,12 +10,15 @@ const protoLoader = require('@grpc/proto-loader');
 // Load merged proto (camelCase version — no keepCase needed)
 const PARKING_PROTO_PATH = path.join(__dirname, '../proto/smart_parking.proto');
 const TRAFFIC_PROTO_PATH = path.join(__dirname, '../proto/smart_traffic.proto');
+const DISCOVERY_PROTO_PATH = path.join(__dirname, '../proto/service_discovery.proto');
 
 const parkingDefinition = protoLoader.loadSync(PARKING_PROTO_PATH, {});
 const trafficDefinition = protoLoader.loadSync(TRAFFIC_PROTO_PATH, {});
+const discoveryDef = protoLoader.loadSync(DISCOVERY_PROTO_PATH, {});
 
 const smartParkingProto = grpc.loadPackageDefinition(parkingDefinition).smartparking;
 const smartTrafficProto = grpc.loadPackageDefinition(trafficDefinition).smarttraffic;
+const discoveryProto = grpc.loadPackageDefinition(discoveryDef).servicediscovery;
 
 // Create gRPC clients
 const parkingClient = new smartParkingProto.SmartParking(
@@ -27,6 +30,12 @@ const trafficClient = new smartTrafficProto.TrafficMonitor(
     'localhost:50053',
     grpc.credentials.createInsecure()
 );
+
+const discoveryClient = new discoveryProto.ServiceDiscovery(
+    'localhost:50055',
+    grpc.credentials.createInsecure()
+);
+
 
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'gui')));
@@ -79,7 +88,7 @@ app.get('/parkingSpaces', (req, res) => {
     });
 });
 
-// New route to handle traffic congestion reporting
+// route to handle traffic congestion reporting
 app.post('/reportTraffic', (req, res) => {
     const updates = req.body;
 
@@ -103,6 +112,18 @@ app.post('/reportTraffic', (req, res) => {
     });
 
     call.end(); // All updates sent, end stream
+});
+
+// route to expose list of registered services
+app.get('/discoveredServices', (req, res) => {
+    discoveryClient.ListServices({}, (err, response) => {
+        if (err) {
+            console.error("gRPC error during ListServices:", err.message);
+            return res.status(500).json({ message: "Discovery service error" });
+        }
+
+        res.json(response.services);
+    });
 });
 
 app.listen(port, () => {

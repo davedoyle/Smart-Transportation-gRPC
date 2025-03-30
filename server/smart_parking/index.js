@@ -73,3 +73,27 @@ server.bindAsync(PORT, grpc.ServerCredentials.createInsecure(), (err, port) => {
     console.log(`Smart Parking gRPC server running on ${PORT}`);
     server.start();
 });
+
+/* Announcing service so discovery can acknowledge */
+const discoveryProtoPath = path.join(__dirname, '../../proto/service_discovery.proto');
+const discoveryDef = protoLoader.loadSync(discoveryProtoPath, {});
+const discoveryProto = grpc.loadPackageDefinition(discoveryDef).servicediscovery;
+
+const discoveryClient = new discoveryProto.ServiceDiscovery(
+    'localhost:50055',
+    grpc.credentials.createInsecure()
+);
+
+// Start the stream and send registration details
+const stream = discoveryClient.RegisterService();
+
+stream.write({
+    serviceName: "SmartParking",
+    serviceType: "parking",
+    address: "localhost:50051",
+    status: "online"
+});
+
+stream.on('end', () => {
+    console.log("Service Discovery stream ended.");
+});
