@@ -44,6 +44,7 @@
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
+                    'x-api-key': 'daveDistSys2025'//api.key, not the securest way of sending!!
                 },
                 body: JSON.stringify({ registrationPlate: plateNumber }) // now camelCase
             })
@@ -95,6 +96,7 @@
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
+                    'x-api-key': 'daveDistSys2025'//api.key, not the securest way of sending!!
                 },
                 body: JSON.stringify(trafficReports)
             })
@@ -111,7 +113,10 @@
         }
 
         function loadDiscoveredServices() {
-            fetch('/discoveredServices')
+            fetch('/discoveredServices',{
+                headers: {
+        'x-api-key': 'daveDistSys2025' // again not secure
+            }})
             .then(res => res.json())
             .then(data => {
                 const list = document.getElementById('discoveryList');
