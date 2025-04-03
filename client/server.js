@@ -6,6 +6,8 @@ const app = express();
 const port = 8080;
 const grpc = require('@grpc/grpc-js');
 const protoLoader = require('@grpc/proto-loader');
+//api key
+const VALID_API_KEY = 'daveDistSys2025'; 
 
 // Load merged proto (camelCase version — no keepCase needed)
 const PARKING_PROTO_PATH = path.join(__dirname, '../proto/smart_parking.proto');
@@ -37,8 +39,33 @@ const discoveryClient = new discoveryProto.ServiceDiscovery(
 );
 
 
+
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'gui')));
+
+/*
+ Server-Sent events can't send headers like x-api-key from the browser,
+ so we let /parkingSpaces through without the API key check.
+ In a real system I'd probably use WebSockets or some token-based method instead.
+*/
+
+
+app.use((req, res, next) => {
+    if (req.path === '/parkingSpaces') {
+        return next(); // Allow SSE to work without API key
+    }
+
+    const key = req.headers['x-api-key'];
+    if (key !== 'daveDistSys2025') {
+        console.warn('Rejected request – invalid or missing API key');
+        return res.status(403).json({ message: 'Access denied. Invalid API key.' });
+    }
+
+    next();
+});
+
+
+
 
 // Route to check plate using gRPC
 app.post('/checkPlate', (req, res) => {
