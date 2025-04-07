@@ -1,6 +1,7 @@
-const grpc = require('@grpc/grpc-js');
+const grpc = require('@grpc/grpc-js'); 
 const protoLoader = require('@grpc/proto-loader');
 const path = require('path');
+const fs = require('fs'); // needed now for reading certs
 
 // Load the proto file (camelCase version)
 const PROTO_PATH = path.join(__dirname, '../../proto/smart_parking.proto');
@@ -55,7 +56,7 @@ function GetParkingAvailability(call) {
     });
 }
 
-// Start gRPC server
+// Start gRPC server with TLS 
 const server = new grpc.Server();
 console.log("Loaded services:", Object.keys(smartParkingProto));
 
@@ -64,13 +65,26 @@ server.addService(smartParkingProto.SmartParking.service, {
     GetParkingAvailability
 });
 
+// Load TLS cert and key (don’t worry, these are just for local secure gRPC)
+const certPath = path.join(__dirname, '../../certificates/cert.pem');
+const keyPath = path.join(__dirname, '../../certificates/key.pem');
+
+const creds = grpc.ServerCredentials.createSsl(
+    null,
+    [{
+        cert_chain: fs.readFileSync(certPath),
+        private_key: fs.readFileSync(keyPath)
+    }],
+    false // not asking clients for certs
+);
+
 const PORT = 'localhost:50051';
-server.bindAsync(PORT, grpc.ServerCredentials.createInsecure(), (err, port) => {
+server.bindAsync(PORT, creds, (err, port) => {
     if (err) {
         console.error(`Server error: ${err.message}`);
         return;
     }
-    console.log(`Smart Parking gRPC server running on ${PORT}`);
+    console.log(`Smart Parking gRPC server running securely on ${PORT}`);
     server.start();
 });
 
@@ -79,9 +93,12 @@ const discoveryProtoPath = path.join(__dirname, '../../proto/service_discovery.p
 const discoveryDef = protoLoader.loadSync(discoveryProtoPath, {});
 const discoveryProto = grpc.loadPackageDefinition(discoveryDef).servicediscovery;
 
+// read cert
+const caCert = fs.readFileSync(path.join(__dirname, '../../certificates/cert.pem'));
+
 const discoveryClient = new discoveryProto.ServiceDiscovery(
     'localhost:50055',
-    grpc.credentials.createInsecure()
+    grpc.credentials.createSsl(caCert) // secure connection, trust self-signed cert
 );
 
 // Start the stream and send registration details

@@ -1,6 +1,7 @@
 const grpc = require('@grpc/grpc-js');
 const protoLoader = require('@grpc/proto-loader');
 const path = require('path');
+const fs = require('fs'); // needed for TLS cert loading
 
 // Load the proto file for Service Discovery
 const PROTO_PATH = path.join(__dirname, '../../proto/service_discovery.proto');
@@ -42,7 +43,7 @@ function RegisterService(call) {
     });
 }
 
-//function to list off the services
+// function to list off the services
 function ListServices(call, callback) {
     const services = [];
 
@@ -58,7 +59,6 @@ function ListServices(call, callback) {
     callback(null, { services });
 }
 
-
 // Set up the gRPC server and bind the service
 const server = new grpc.Server();
 server.addService(serviceDiscoveryProto.ServiceDiscovery.service, {
@@ -66,21 +66,36 @@ server.addService(serviceDiscoveryProto.ServiceDiscovery.service, {
     ListServices
 });
 
+// Bring in our TLS certs for secure connection
+const certPath = path.join(__dirname, '../../certificates/cert.pem');
+const keyPath = path.join(__dirname, '../../certificates/key.pem');
+
+const creds = grpc.ServerCredentials.createSsl(
+    null,
+    [{
+        cert_chain: fs.readFileSync(certPath),
+        private_key: fs.readFileSync(keyPath)
+    }],
+    false
+);
+
 const PORT = 'localhost:50055';
-server.bindAsync(PORT, grpc.ServerCredentials.createInsecure(), () => {
-    console.log(`Service Discovery is running on ${PORT}`);
+server.bindAsync(PORT, creds, () => {
+    console.log(`Service Discovery is running securely on ${PORT}`);
     server.start();
 });
-
 
 /* the next piece of code wasnt needed but i added it to allow the service to appear in the gui, why would it register with itself! */
 const discoveryProtoPath = path.join(__dirname, '../../proto/service_discovery.proto');
 const discoveryDef = protoLoader.loadSync(discoveryProtoPath, {});
 const discoveryProto = grpc.loadPackageDefinition(discoveryDef).servicediscovery;
 
+//read the cert
+const caCert = fs.readFileSync(path.join(__dirname, '../../certificates/cert.pem'));
+
 const selfClient = new discoveryProto.ServiceDiscovery(
     'localhost:50055',
-    grpc.credentials.createInsecure()
+    grpc.credentials.createSsl(caCert) // TLS connection now, to match our server
 );
 
 const stream = selfClient.RegisterService();

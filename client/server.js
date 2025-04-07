@@ -9,7 +9,12 @@ const protoLoader = require('@grpc/proto-loader');
 //api key
 const VALID_API_KEY = 'daveDistSys2025'; 
 
-// Load merged proto (camelCase version — no keepCase needed)
+//TLS fun
+//Switched to TLS because everything's secure now – makes sense to update the client side too
+const fs = require('fs');
+const caCert = fs.readFileSync('../certificates/cert.pem');
+
+//Load merged proto (camelCase version — no keepCase needed)
 const PARKING_PROTO_PATH = path.join(__dirname, '../proto/smart_parking.proto');
 const TRAFFIC_PROTO_PATH = path.join(__dirname, '../proto/smart_traffic.proto');
 const DISCOVERY_PROTO_PATH = path.join(__dirname, '../proto/service_discovery.proto');
@@ -25,17 +30,17 @@ const discoveryProto = grpc.loadPackageDefinition(discoveryDef).servicediscovery
 // Create gRPC clients
 const parkingClient = new smartParkingProto.SmartParking(
     'localhost:50051',
-    grpc.credentials.createInsecure()
+    grpc.credentials.createSsl(caCert)
 );
 
 const trafficClient = new smartTrafficProto.TrafficMonitor(
     'localhost:50053',
-    grpc.credentials.createInsecure()
+    grpc.credentials.createSsl(caCert)
 );
 
 const discoveryClient = new discoveryProto.ServiceDiscovery(
     'localhost:50055',
-    grpc.credentials.createInsecure()
+    grpc.credentials.createSsl(caCert)
 );
 
 
@@ -49,12 +54,14 @@ app.use(express.static(path.join(__dirname, 'gui')));
  In a real system I'd probably use WebSockets or some token-based method instead.
 */
 
-
+//api key omissions
 app.use((req, res, next) => {
     if (req.path === '/parkingSpaces') {
         return next(); // Allow SSE to work without API key
     }
-
+    if (req.path === '/favicon.ico') {
+        return res.status(204).end(); // No Content, skips the API check
+    }
     const key = req.headers['x-api-key'];
     if (key !== 'daveDistSys2025') {
         console.warn('Rejected request – invalid or missing API key');
