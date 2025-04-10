@@ -6,15 +6,15 @@ const app = express();
 const port = 8080;
 const grpc = require('@grpc/grpc-js');
 const protoLoader = require('@grpc/proto-loader');
-//api key
+//API Key — pretty basic here but does the job for a project
 const VALID_API_KEY = 'daveDistSys2025'; 
 
 //TLS fun
-//Switched to TLS because everything's secure now – makes sense to update the client side too
+//TLS setup — everything in this project is secure gRPC now, so naturally the GUI talking to services should be secured too
 const fs = require('fs');
 const caCert = fs.readFileSync('../certificates/cert.pem');
 
-//Load merged proto (camelCase version — no keepCase needed)
+// Load all the proto files so the GUI knows how to talk to each service
 const PARKING_PROTO_PATH = path.join(__dirname, '../proto/smart_parking.proto');
 const TRAFFIC_PROTO_PATH = path.join(__dirname, '../proto/smart_traffic.proto');
 const DISCOVERY_PROTO_PATH = path.join(__dirname, '../proto/service_discovery.proto');
@@ -23,11 +23,12 @@ const parkingDefinition = protoLoader.loadSync(PARKING_PROTO_PATH, {});
 const trafficDefinition = protoLoader.loadSync(TRAFFIC_PROTO_PATH, {});
 const discoveryDef = protoLoader.loadSync(DISCOVERY_PROTO_PATH, {});
 
+
 const smartParkingProto = grpc.loadPackageDefinition(parkingDefinition).smartparking;
 const smartTrafficProto = grpc.loadPackageDefinition(trafficDefinition).smarttraffic;
 const discoveryProto = grpc.loadPackageDefinition(discoveryDef).servicediscovery;
 
-// Create gRPC clients
+// gRPC clients created here - each knows where its service lives and how to talk securely over TLS
 const parkingClient = new smartParkingProto.SmartParking(
     'localhost:50051',
     grpc.credentials.createSsl(caCert)
@@ -49,12 +50,17 @@ app.use(express.json());
 app.use(express.static(path.join(__dirname, 'gui')));
 
 /*
- Server-Sent events can't send headers like x-api-key from the browser,
- so we let /parkingSpaces through without the API key check.
- In a real system I'd probably use WebSockets or some token-based method instead.
+SSE Note:
+Server-Sent Events (SSE) don't send headers like x-api-key from the browser.
+Normally, in stuff I’ve built (like bots for Telegram or remote control scripts for Plex using their API tokens)
+the API key/token would travel in a header or as part of the request - easy.
+
+Here though, because SSE doesn't work that way, I have to let the /parkingSpaces endpoint through without checking the API key.
+If this was production - I'd probably go WebSockets or JWT tokens.
 */
 
-//api key omissions
+
+//api key check omissions
 app.use((req, res, next) => {
     if (req.path === '/parkingSpaces') {
         return next(); // Allow SSE to work without API key
@@ -148,7 +154,7 @@ app.post('/reportTraffic', (req, res) => {
     call.end(); // All updates sent, end stream
 });
 
-// route to expose list of registered services
+// Get list of all known services (for GUI display)
 app.get('/discoveredServices', (req, res) => {
     discoveryClient.ListServices({}, (err, response) => {
         if (err) {

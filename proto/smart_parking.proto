@@ -1,25 +1,35 @@
-//unary and serverstreaming
+// Unary 
+// Server Streaming 
+
 syntax = "proto3";
 
 package smartparking;
 
 service SmartParking {
+  
+  // Client sends a reg plate to check
   rpc CheckEntry (CarRequest) returns (CarResponse);
+
+  // Client sees parking availability updates
   rpc GetParkingAvailability (Empty) returns (stream ParkingUpdate);
 }
 
+// Data sent in when checking a plate
 message CarRequest {
-  string registrationPlate = 1; // changed from registration_plate
+  string registrationPlate = 1;  // was called registration_plate for some reason the underscore was causing big problems for me, removing the snake naming resolved the bother
 }
 
+// Data sent back after checking a plate
 message CarResponse {
-  bool approved = 1;
-  string message = 2;
+  bool approved = 1;  // true if car allowed in
+  string message = 2; // meesage for user
 }
 
+// Empty request message (needed to trigger GetParkingAvailability)
 message Empty {}
 
+// Parking availability update sent repeatedly via stream
 message ParkingUpdate {
-  int32 availableSpaces = 1; // changed from available_spaces
-  string timestamp = 2;
+  int32 availableSpaces = 1;  // current available spaces in the car park
+  string timestamp = 2;       // when that number was true
 }

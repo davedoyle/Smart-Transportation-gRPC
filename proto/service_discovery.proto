@@ -6,6 +6,7 @@ package servicediscovery;
 service ServiceDiscovery {
   // Bi-directional streaming RPC
   rpc RegisterService (stream ServiceInfo) returns (stream DiscoveryResponse);
+  
   //unary to show discovered services on gui
   rpc ListServices (Empty) returns (ServiceList);
 }
@@ -19,11 +20,12 @@ message ServiceInfo {
 
 message DiscoveryResponse {
   string message = 1;         // "Registered successfully", "Ping from server"
-  string timestamp = 2;       // optional feedback time
+  string timestamp = 2;       // when the response was sent
 }
 
-message Empty {}
+message Empty {} // Used for requests that don't need input
 
+// List of all currently registered services
 message ServiceList {
   repeated ServiceInfo services = 1;
 }

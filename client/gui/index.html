@@ -2,41 +2,86 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Smart Parking Plate Checker</title>
+    <title>Smart Transportation GUI</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f6f8fa;
+            margin: 0;
+            padding: 20px;
+        }
+
+        h1, h2 {
+            color: #333;
+        }
+
+        .section {
+            background: #ffffff;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+
+        input, select, button {
+            padding: 8px;
+            margin: 5px;
+        }
+
+        button {
+            cursor: pointer;
+        }
+
+        #trafficList {
+            list-style: square;
+            margin-left: 20px;
+        }
+    </style>
 </head>
 <body>
-    <h1>Number Plate Checker</h1>
-    <input type="text" id="plateInput" placeholder="Enter Plate Number" />
-    <button onclick="checkPlate()">Check Plate</button>
-    <p id="result"></p>
 
-    <h2>Available Parking Spaces: <span id="parkingSpaces">Loading...</span></h2>
+    <div class="section">
+        <h1>Number Plate Checker</h1>
+        <p>This sends a unary gRPC request to check a plate against our "allowed list".</p>
+        <input type="text" id="plateInput" placeholder="Enter Plate Number" />
+        <button onclick="checkPlate()">Check Plate</button>
+        <p id="result"></p>
+    </div>
 
-    <hr>
-    <h1>Traffic Congestion Reporter</h1>
-    <p>Send a few location + congestion levels and see what the server thinks</p>
-    <input type="text" id="locationInput" placeholder="Enter Location" />
-    <select id="congestionLevel">
-        <option value="1">1 - Heavy</option>
-        <option value="2">2</option>
-        <option value="3">3 - Medium</option>
-        <option value="4">4</option>
-        <option value="5">5 - Very Light</option>
-    </select>
-    <button onclick="addTraffic()">Add Report</button>
-    <button onclick="submitTraffic()">Submit All</button>
+    <div class="section">
+        <h2>Live Parking Spaces</h2>
+        <p>This section uses Server-Sent Events (SSE) to stream live parking space updates from the backend every 3 seconds.</p>
+        <h3>Available Spaces: <span id="parkingSpaces">Loading...</span></h3>
+    </div>
 
-    <ul id="trafficList"></ul>
-    <p id="trafficSummary"></p>
-    
-    <hr>
-    <h2>Registered Services</h2>
-    <ul id="discoveryList"></ul>
-    
+    <div class="section">
+        <h1>Traffic Congestion Reporter</h1>
+        <p>This uses client-streaming gRPC — we queue up several traffic reports and send them all in one stream.</p>
+        <input type="text" id="locationInput" placeholder="Enter Location" />
+        <select id="congestionLevel">
+            <option value="1">1 - Heavy</option>
+            <option value="2">2 - Heavier</option>
+            <option value="3">3 - Medium</option>
+            <option value="4">4 - Light-ish</option>
+            <option value="5">5 - Very Light</option>
+        </select>
+        <button onclick="addTraffic()">Add Report</button>
+        <button onclick="submitTraffic()">Submit All</button>
+
+        <ul id="trafficList"></ul>
+        <p id="trafficSummary"></p>
+    </div>
+
+    <div class="section">
+        <h2>Discovered Services</h2>
+        <p>This calls the Service Discovery service via a unary gRPC request and shows everything that’s currently registered.</p>
+        <ul id="discoveryList"></ul>
+    </div>
 
     <script>
         const trafficReports = [];
 
+        // Check if a plate is on the approved list (Unary call)
         function checkPlate() {
             const plateNumber = document.getElementById('plateInput').value;
 
@@ -44,9 +89,9 @@
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'x-api-key': 'daveDistSys2025'//api.key, not the securest way of sending!!
+                    'x-api-key': 'daveDistSys2025' // API key included — not ideal for real security
                 },
-                body: JSON.stringify({ registrationPlate: plateNumber }) // now camelCase
+                body: JSON.stringify({ registrationPlate: plateNumber })
             })
             .then(response => response.json())
             .then(data => {
@@ -59,19 +104,20 @@
             });
         }
 
+        // SSE: Listen for streamed parking updates from the backend
         const eventSource = new EventSource('/parkingSpaces');
         eventSource.onmessage = (event) => {
             const data = JSON.parse(event.data);
-            document.getElementById("parkingSpaces").textContent = data.availableSpaces; // now camelCase
+            document.getElementById("parkingSpaces").textContent = data.availableSpaces;
         };
 
-        // Add a traffic report to memory
+        // Add a traffic report locally (not yet sent)
         function addTraffic() {
             const location = document.getElementById('locationInput').value;
             const congestion = parseInt(document.getElementById('congestionLevel').value);
 
             if (!location) {
-                alert("Enter a location first silly!.");
+                alert("Enter a location first.");
                 return;
             }
 
@@ -85,7 +131,7 @@
             document.getElementById('locationInput').value = '';
         }
 
-        // Send all reports to backend for gRPC streaming
+        // Submit all queued traffic reports via gRPC stream
         function submitTraffic() {
             if (trafficReports.length === 0) {
                 alert("Add at least one traffic report first!");
@@ -96,7 +142,7 @@
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'x-api-key': 'daveDistSys2025'//api.key, not the securest way of sending!!
+                    'x-api-key': 'daveDistSys2025'
                 },
                 body: JSON.stringify(trafficReports)
             })
@@ -112,33 +158,33 @@
             });
         }
 
+        // Show registered services via discovery (unary call)
         function loadDiscoveredServices() {
-            fetch('/discoveredServices',{
+            fetch('/discoveredServices', {
                 headers: {
-        'x-api-key': 'daveDistSys2025' // again not secure
-            }})
+                    'x-api-key': 'daveDistSys2025'
+                }
+            })
             .then(res => res.json())
             .then(data => {
                 const list = document.getElementById('discoveryList');
-                list.innerHTML = ''; // clear previous
+                list.innerHTML = '';
 
                 data.forEach(service => {
                     const item = document.createElement('li');
                     item.textContent = `${service.serviceName} (${service.serviceType}) @ ${service.address} – ${service.status}`;
                     list.appendChild(item);
-            });
+                });
             })
             .catch(err => {
                 console.error('Failed to load discovered services:', err);
-        });
-}
-        // Call it once on page load
+            });
+        }
+
+        // Load once and refresh every 10 seconds
         loadDiscoveredServices();
-
-        // Optional: refresh every 10 seconds
         setInterval(loadDiscoveredServices, 10000);
-
-
     </script>
+
 </body>
 </html>

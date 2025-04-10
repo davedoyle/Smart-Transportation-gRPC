@@ -1,24 +1,22 @@
-//client streaming
+// client streaming
 syntax = "proto3";
 
 package smarttraffic;
 
 service TrafficMonitor {
-  // Client streaming RPC
+  // Client streaming RPC — send multiple updates from the client
   rpc StreamTraffic (stream TrafficUpdate) returns (TrafficSummary);
+}
 
-  }
-
-// Message sent by each user
+// Message sent by each user in the stream
 message TrafficUpdate {
   string location = 1;
-  int32 congestionLevel = 2; // 1 = heavy, 5 = very light
+  int32 congestionLevel = 2; // 1 = heavy traffic, 5 = very light traffic
 }
 
-// Response from the server after stream ends
+// Server reply once the client has finished sending updates
 message TrafficSummary {
-  float averageCongestion = 1;
-  int32 totalReports = 2;
-  string mostReportedLocation = 3;
+  float averageCongestion = 1;     // average across all reports
+  int32 totalReports = 2;          // how many reports were sent in
+  string mostReportedLocation = 3; // location that was reported the most
 }
-

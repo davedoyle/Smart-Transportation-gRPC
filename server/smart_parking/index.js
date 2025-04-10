@@ -3,17 +3,20 @@ const protoLoader = require('@grpc/proto-loader');
 const path = require('path');
 const fs = require('fs'); // needed now for reading certs
 
-// Load the proto file (camelCase version)
+/* Load the proto file so I can work with it, this is vastly different to how i work day to day with 
+asp.net, how i interpreted all this is, asp.net and c# backend know all about each other, where as here the proto's are essentially for the
+frontend to know the backend exists and what to expect*/
 const PROTO_PATH = path.join(__dirname, '../../proto/smart_parking.proto');
 const packageDefinition = protoLoader.loadSync(PROTO_PATH, {}); // no keepCase needed
 const smartParkingProto = grpc.loadPackageDefinition(packageDefinition).smartparking;
 
-// Hardcoded list of allowed plates (simulating approved vehicles)
+// Hardcoded list of allowed plates
 const allowedPlates = ['12C3456', '191D7890', '211L4321'].map(p => p.trim().toUpperCase());
 
-// Handles incoming CheckEntry requests
+// gRPC function to handle when someone checks a plate
 function CheckEntry(call, callback) {
     console.log("Full gRPC request body:", call.request);
+    //minor leanring, gRPC is super strict around naming nomenclature, if its camelcase, stick to it if something else stick to it
     const plate = (call.request.registrationPlate || '').trim().toUpperCase(); // now camelCase
     console.log(`Received registration: ${plate}`);
 
@@ -65,7 +68,7 @@ server.addService(smartParkingProto.SmartParking.service, {
     GetParkingAvailability
 });
 
-// Load TLS cert and key (don’t worry, these are just for local secure gRPC)
+// Load TLS cert and key 
 const certPath = path.join(__dirname, '../../certificates/cert.pem');
 const keyPath = path.join(__dirname, '../../certificates/key.pem');
 
@@ -88,12 +91,12 @@ server.bindAsync(PORT, creds, (err, port) => {
     server.start();
 });
 
-/* Announcing service so discovery can acknowledge */
+// Announcing service so discovery can acknowledge
 const discoveryProtoPath = path.join(__dirname, '../../proto/service_discovery.proto');
 const discoveryDef = protoLoader.loadSync(discoveryProtoPath, {});
 const discoveryProto = grpc.loadPackageDefinition(discoveryDef).servicediscovery;
 
-// read cert
+// reading the cert here so I can connect securely to Service Discovery
 const caCert = fs.readFileSync(path.join(__dirname, '../../certificates/cert.pem'));
 
 const discoveryClient = new discoveryProto.ServiceDiscovery(

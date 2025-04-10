@@ -3,15 +3,19 @@ const protoLoader = require('@grpc/proto-loader');
 const path = require('path');
 const fs = require('fs'); // needed for TLS cert loading
 
-// Load the proto file for Service Discovery
+/* Load the proto file so I can work with it — same deal as everywhere else,
+this basically tells the frontend world what this service looks like and what to expect. */
 const PROTO_PATH = path.join(__dirname, '../../proto/service_discovery.proto');
 const packageDef = protoLoader.loadSync(PROTO_PATH, {});
 const serviceDiscoveryProto = grpc.loadPackageDefinition(packageDef).servicediscovery;
 
-// Just using a simple in-memory object to track services
+// Using a plain old in-memory Map to track any services that register themselves.
+// In real life this would probably be a database or registry or something more robust.
 const registeredServices = new Map();
 
-// This handles the bi-directional stream where services register themselves
+// This is the heart of Service Discovery —
+// any other service talks to this and says:
+// "Hey, here who I am and where I live"
 function RegisterService(call) {
     console.log('A service has connected to register...');
 
@@ -43,7 +47,7 @@ function RegisterService(call) {
     });
 }
 
-// function to list off the services
+// function to list everyone who's registered with Service Discovery
 function ListServices(call, callback) {
     const services = [];
 
@@ -66,7 +70,8 @@ server.addService(serviceDiscoveryProto.ServiceDiscovery.service, {
     ListServices
 });
 
-// Bring in our TLS certs for secure connection
+// Load my self-signed certs — just like all my other services
+// keeping the gRPC connection secure even if this is all running locally.
 const certPath = path.join(__dirname, '../../certificates/cert.pem');
 const keyPath = path.join(__dirname, '../../certificates/key.pem');
 
@@ -85,12 +90,14 @@ server.bindAsync(PORT, creds, () => {
     server.start();
 });
 
-/* the next piece of code wasnt needed but i added it to allow the service to appear in the gui, why would it register with itself! */
+/* This bit technically isn't needed — a Service Discovery system 
+registering itself is wrong — but I added it so the GUI 
+could see this service too when listing registered services, felt it was part of the requirements */
 const discoveryProtoPath = path.join(__dirname, '../../proto/service_discovery.proto');
 const discoveryDef = protoLoader.loadSync(discoveryProtoPath, {});
 const discoveryProto = grpc.loadPackageDefinition(discoveryDef).servicediscovery;
 
-//read the cert
+
 const caCert = fs.readFileSync(path.join(__dirname, '../../certificates/cert.pem'));
 
 const selfClient = new discoveryProto.ServiceDiscovery(
@@ -100,6 +107,7 @@ const selfClient = new discoveryProto.ServiceDiscovery(
 
 const stream = selfClient.RegisterService();
 
+// Tell my own service "I'm online"...
 stream.write({
     serviceName: "ServiceDiscovery",
     serviceType: "discovery",
