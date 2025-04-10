@@ -93,6 +93,29 @@ stream.write({
     status: "online"
 });
 
+
+// talking to smart_parrking just to hit the requirement as i missed it late in the development, time out to give a chance to start before looking
+setTimeout(() => {
+discoveryClient.ListServices({}, (err, response) => {
+    if (err) {
+        console.error("Failed to discover services:", err.message);
+        return;
+    }
+
+    const parkingService = response.services.find(s => s.serviceName === 'SmartParking');
+
+    if (parkingService) {
+        console.log(`Found SmartParking at ${parkingService.address}`);
+        // If this was production i'd do some further calls and communicate better
+    } else {
+        console.warn("Couldn't spot SmartParking during discovery.");
+    }
+});
+}, 3000); // wait 3 seconds
+
+
+
+
 stream.on('end', () => {
     console.log("Service Discovery stream ended.");
 });
