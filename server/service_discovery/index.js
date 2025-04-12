@@ -63,8 +63,10 @@ function ListServices(call, callback) {
     callback(null, { services });
 }
 
-// Set up the gRPC server and bind the service
+// Set up the gRPC server 
 const server = new grpc.Server();
+console.log("Loaded services:", Object.keys(serviceDiscoveryProto)); 
+
 server.addService(serviceDiscoveryProto.ServiceDiscovery.service, {
     RegisterService: RegisterService,
     ListServices

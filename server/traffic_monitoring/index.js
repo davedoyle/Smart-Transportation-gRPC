@@ -52,6 +52,7 @@ function StreamTraffic(call, callback) {
 
 // gRPC server setup
 const server = new grpc.Server();
+console.log("Loaded services:", Object.keys(trafficProto));  
 server.addService(trafficProto.TrafficMonitor.service, {
     StreamTraffic: StreamTraffic
 });
