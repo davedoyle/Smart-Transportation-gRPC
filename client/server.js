@@ -56,7 +56,7 @@ Normally, in stuff I’ve built (like bots for Telegram or remote control script
 the API key/token would travel in a header or as part of the request - easy.
 
 Here though, because SSE doesn't work that way, I have to let the /parkingSpaces endpoint through without checking the API key.
-If this was production - I'd probably go WebSockets or JWT tokens.
+If this was production - I'd probably go with WebSockets, or a JSON registry or token based like JWT .
 */
 
 
